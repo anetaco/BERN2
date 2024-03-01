@@ -1,33 +1,32 @@
-import random
-import requests
-import os
-import string
-import numpy as np
-import hashlib
-import time
-import shutil
 import asyncio
-import socket
-import struct
+import hashlib
 import json
+import os
+import random
+import shutil
+import socket
+import string
+import struct
+import subprocess
 import sys
-from datetime import datetime
-from collections import OrderedDict
+import time
 import traceback
+from collections import OrderedDict
+from datetime import datetime
+
 import bioregistry
+import numpy as np
+import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from convert import pubtator2dict_list, get_pub_annotation
+from convert import get_pub_annotation, pubtator2dict_list
 from normalizer import Normalizer
-
-import pymongo
 from pymongo import MongoClient
 
 
-
 class BERN2():
-    def __init__(self, 
+    def __init__(self,
         gnormplus_home,
         gnormplus_port,
         tmvar2_home,
@@ -42,7 +41,7 @@ class BERN2():
         mtner_host='localhost',
         cache_host='localhost',
         time_format='[%d/%b/%Y %H:%M:%S.%f]',
-        max_word_len=50, 
+        max_word_len=50,
         seed=2019,
         use_neural_normalizer=True,
         keep_files=False,
@@ -94,11 +93,11 @@ class BERN2():
             client = MongoClient(cache_host, cache_port, serverSelectionTimeoutMS = 2000)
             client.server_info()
             self.caching_db = client.bern2_v1_1.pmid
-        except Exception as e:
+        except Exception:
             self.caching_db = None
 
         print(datetime.now().strftime(self.time_format), 'BERN2 LOADED..')
-    
+
     def annotate_text(self, text, pmid=None):
         try:
             text = text.strip()
@@ -107,7 +106,7 @@ class BERN2():
             output = self.tag_entities(text, base_name)
             output['error_code'], output['error_message'] = 0, ""
             output = self.post_process_output(output)
-        except Exception as e:
+        except Exception:
             errStr = traceback.format_exc()
             print(errStr)
 
@@ -117,7 +116,7 @@ class BERN2():
 
     def annotate_pmid(self, pmid):
         pmid = pmid.strip()
-        
+
         # validate pmid
         if not pmid.isdecimal():
             print(f"warn! pmid is not valid: {pmid}")
@@ -139,16 +138,16 @@ class BERN2():
                 elif 'error_code' in output and output['error_code'] != 0:
                     self.caching_db.delete_one({'_id': pmid})
                     output = None
-        
+
         # otherwise, get pubmed article from web and annotate the text
-        if output is None:    
+        if output is None:
             text, status_code = self.get_text_data_from_pubmed(pmid)
 
             if status_code == 200:
                 output = OrderedDict()
-                output['pmid'] = pmid 
+                output['pmid'] = pmid
                 json_result = self.annotate_text(text, pmid)
-                
+
                 output.update(json_result)
 
                 # if db is running, cache the annotation into db
@@ -169,7 +168,7 @@ class BERN2():
         # hotfix
         if 'annotations' not in output:
             return output
-        
+
         # split_cuis (e.g., "OMIM:608627,MESH:C563895" => ["OMIM:608627","MESH:C563895"])
         output = self.split_cuis(output)
 
@@ -179,7 +178,7 @@ class BERN2():
         return output
 
     def split_cuis(self, output):
-        # "OMIM:608627,MESH:C563895" or "OMIM:608627|MESH:C563895" 
+        # "OMIM:608627,MESH:C563895" or "OMIM:608627|MESH:C563895"
         # => ["OMIM:608627","MESH:C563895"]
 
         for anno in output['annotations']:
@@ -191,7 +190,7 @@ class BERN2():
                     cui = cui[0]
 
                 new_cuis += cui.replace("|", ",").split(",")
-            anno['id'] = new_cuis                 
+            anno['id'] = new_cuis
         return output
 
     def standardize_prefixes(self, output):
@@ -214,21 +213,21 @@ class BERN2():
                 else:
                     new_cuis.append(cui)
                     continue
-                    
+
                 normalized_prefix = bioregistry.normalize_prefix(prefix)
                 if normalized_prefix is not None:
                     prefix = normalized_prefix
-                
+
                 preferred_prefix = bioregistry.get_preferred_prefix(prefix)
                 if preferred_prefix is not None:
                     prefix = preferred_prefix
-                
+
                 # to convert CVCL_J260 to cellosaurus:CVCL_J260
                 if prefix == 'cellosaurus':
                     numbers = "CVCL_" + numbers
 
                 new_cuis.append(":".join([prefix,numbers]))
-            
+
             anno['id'] = new_cuis
 
         return output
@@ -238,9 +237,9 @@ class BERN2():
         abstract = ""
 
         URL = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/?format=pubmed"
-        response = requests.get(URL) 
+        response = requests.get(URL)
         status_code = response.status_code
-        
+
         if status_code == 200:
             is_abs = False
             is_title = False
@@ -262,7 +261,7 @@ class BERN2():
         else:
             print(f"warn! response.status_code={response.status_code}")
             text = ""
-            
+
         return text, status_code
 
     def preprocess_input(self, text, base_name):
@@ -290,12 +289,12 @@ class BERN2():
             print(datetime.now().strftime(self.time_format),
                   f'[{base_name}] Found a \\x0b -> replace w/ a space')
             text = text.replace('\x0b', ' ')
-            
+
         if '\x0c' in text:
             print(datetime.now().strftime(self.time_format),
                   f'[{base_name}] Found a \\x0c -> replace w/ a space')
             text = text.replace('\x0c', ' ')
-        
+
         # remove non-ascii
         text = text.encode("ascii", "ignore").decode()
 
@@ -359,7 +358,7 @@ class BERN2():
         shutil.copy(input_gnormplus, input_tmvar_ner)
         shutil.copy(input_gnormplus, input_mtner)
         ner_start_time = time.time()
-        
+
         # async call for gnormplus and tmvar
         arguments_for_coroutines = []
         loop = asyncio.new_event_loop()
@@ -374,7 +373,7 @@ class BERN2():
         # get output result to merge
         tagged_docs = async_result['tagged_docs']
         num_entities = async_result['num_entities']
-        
+
         # mutation normalization using the outputs of gnormplus and tmvar
         # TODO! need to check beforehand the output of gnormplus and tmvar
         tm_norm_start_time = time.time()
@@ -383,10 +382,10 @@ class BERN2():
         sync_tell_inputfile(self.tmvar2_host,
                        self.tmvar2_port,
                        os.path.basename(input_tmvar_norm) + "|" + os.path.basename(input_tmvar_gene))
-        tmvar2_elapse_time += time.time() - tm_norm_start_time # add normalization time 
+        tmvar2_elapse_time += time.time() - tm_norm_start_time # add normalization time
 
         tmvar_docs = pubtator2dict_list(output_tmvar_norm)
-        
+
         ner_elapse_time = time.time() - ner_start_time
         print(datetime.now().strftime(self.time_format),
               f'[{base_name}] ALL NER {ner_elapse_time} sec')
@@ -401,15 +400,15 @@ class BERN2():
         n_norm_start_time = time.time()
         if self.normalizer.use_neural_normalizer and num_entities > 0:
             tagged_docs = self.normalizer.neural_normalize(
-                ent_type='disease', 
+                ent_type='disease',
                 tagged_docs=tagged_docs
             )
             tagged_docs = self.normalizer.neural_normalize(
-                ent_type='drug', 
+                ent_type='drug',
                 tagged_docs=tagged_docs
             )
             tagged_docs = self.normalizer.neural_normalize(
-                ent_type='gene', 
+                ent_type='gene',
                 tagged_docs=tagged_docs
             )
 
@@ -435,7 +434,7 @@ class BERN2():
             'r_norm_elapse_time':r_norm_elapse_time,
             'n_norm_elapse_time':n_norm_elapse_time,
             'norm_elapse_time':norm_elapse_time,
-        } 
+        }
 
         # Delete temp files
         os.remove(input_gnormplus)
@@ -445,7 +444,7 @@ class BERN2():
         os.remove(output_tmvar_norm)
         os.remove(input_mtner)
         os.remove(output_mtner)
-        
+
         return tagged_docs[0]
 
     def resolve_overlap(self, tagged_docs, tmvar_docs):
@@ -463,13 +462,13 @@ class BERN2():
                 end = mention_dict['end']
                 if "%d-%d" % (start, end) not in span2mentions:
                     span2mentions["%d-%d" % (start, end)] = []
-                
+
                 span2mentions["%d-%d"%(start, end)].append({"type":entity_type,
                                                             "CUI": mention_dict['id'],
                                                             "check_CUI": 1 if mention_dict['id'] != 'CUI-less' else 0,
                                                             "prob": tagged_docs[0]['prob'][entity_type][mention_idx][1],
                                                             "is_neural_normalized":mention_dict['is_neural_normalized']})
-        
+
         for span in span2mentions.keys():
             # sort elements with CUI
             span2mentions[span] = sorted(span2mentions[span], key=lambda x:(x['check_CUI'], x['prob']), reverse=True)
@@ -479,7 +478,7 @@ class BERN2():
             for mention_idx, mention_dict in enumerate(entity_dict):
                 start = mention_dict['start']
                 end = mention_dict['end']
-                
+
                 if span2mentions["%d-%d"%(start, end)][0]['CUI'] == mention_dict['id'] and span2mentions["%d-%d"%(start, end)][0]['type'] == entity_type:
                     update_list.append(mention_dict)
 
@@ -487,7 +486,7 @@ class BERN2():
 
         # [Step 2] add mutation annotation
         tagged_docs[0]['entities']['mutation'] = tmvar_docs[0]['entities']['mutation']
-                       
+
         return tagged_docs
 
     # generate id for temporary files
@@ -532,14 +531,14 @@ class BERN2():
             return {"tmvar2_elapse_time": tmvar2_elapse_time,
                     "tmvar2_resp": tmvar2_resp}
 
-        elif ner_type == 'mtner':            
+        elif ner_type == 'mtner':
             # Run neural model
             start_time = time.time()
             mtner_resp = await async_tell_inputfile(self.mtner_host,
                                          self.mtner_port,
                                          pubtator_file,
                                          loop)
-            
+
             with open(output_mtner, 'r', encoding='utf-8') as f:
                 tagged_docs = [json.load(f)]
 
@@ -649,11 +648,11 @@ if __name__ == '__main__':
                                                 'bern', 'mtnerHome'))
     argparser.add_argument('--mtner_host',
                            help='biomedical language model host', default='localhost')
-    argparser.add_argument('--mtner_port', type=int, 
+    argparser.add_argument('--mtner_port', type=int,
                            help='biomedical language model port', default=18894)
     argparser.add_argument('--cache_host',
                            help='annotation cached db host', default='localhost')
-    argparser.add_argument('--cache_port', type=int, 
+    argparser.add_argument('--cache_port', type=int,
                            help='annotation cached db port', default=27017)
     argparser.add_argument('--gene_norm_port', type=int,
                            help='GNormPlus port', default=18888)

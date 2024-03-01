@@ -1,66 +1,58 @@
-from app import create_app
+import os
+from dataclasses import dataclass, field
+from tempfile import mkdtemp
 
-import argparse
 
-def parse():
-    parser = argparse.ArgumentParser(description="Arguments for BERN2")
+@dataclass
+class BERN2Args:
+    tmpdir: str = field(default_factory=mkdtemp)
+    mtner_home: str = "multi_ner"
+    mtner_port: int = 18894
+    gnormplus_home: str = "resources/GNormPlusJava"
+    gnormplus_port: int = 18895
+    tmvar2_home: str = "resources/tmVarJava"
+    tmvar2_port: int = 18896
+    gene_norm_port: int = 18888
+    disease_norm_port: int = 18892
 
-    # FLASK arguments
-    parser.add_argument("--host",
-                        default="0.0.0.0",
-                        type=str,
-                        help="Host for running flask")
-    parser.add_argument("--port",
-                        default=5000,
-                        type=int,
-                        help="Port for running flask")
+    cache_host: str = "localhost"
+    cache_port: int = 27017
+    host: str = "0.0.0.0"
+    port: int = 8888
 
-    # BERN2 model arguments
-    parser.add_argument("--mtner_home",
-                        default="./multi_ner",
-                        type=str)
-    parser.add_argument("--mtner_port",
-                        default=18894,
-                        type=int)
-    parser.add_argument("--gnormplus_home",
-                        default="./resources/GNormPlusJava",
-                        type=str)
-    parser.add_argument("--gnormplus_port",
-                        default=18895,
-                        type=int)
-    parser.add_argument("--tmvar2_home",
-                        default="./resources/tmVarJava",
-                        type=str)
-    parser.add_argument("--tmvar2_port",
-                        default=18896,
-                        type=int)
-    parser.add_argument('--cache_host',
-                        default='localhost')
-    parser.add_argument('--cache_port',  
-                        default=27017,
-                        type=int)
-    parser.add_argument("--gene_norm_port",
-                        default=18888,
-                        type=int)
-    parser.add_argument("--disease_norm_port",
-                        default=18892,
-                        type=int)
-    parser.add_argument("--use_neural_normalizer",
-                        action="store_true")
-    parser.add_argument("--keep_files",
-                        action="store_true")
-    parser.add_argument("--front_dev",
-                        action="store_true")
-    parser.add_argument("--no_cuda",
-                        action="store_true")
-    args = parser.parse_args()
-    return args
+    use_neural_normalizer: bool = True
+    keep_files: bool = False
+    no_cuda: bool = False
+    front_dev: bool = False
+
+    def __post_init__(self):
+        self.mtner_home = os.path.join(self.tmpdir, self.mtner_home)
+        self.gnormplus_home = os.path.join(self.tmpdir, self.gnormplus_home)
+        self.tmvar2_home = os.path.join(self.tmpdir, self.tmvar2_home)
+
+
+args = BERN2Args()
 
 if __name__ == "__main__":
-    args = parse()
-    print("Arguments:")
-    for arg in vars(args):
-        print("\t{}: {}".format(arg, getattr(args, arg)))
+    os.execlp(
+        "gunicorn",
+        "gunicorn",
+        "--preload",
+        "--timeout",
+        "600",
+        "-w",
+        "3",
+        "-b",
+        f"{args.host}:{args.port}",
+        "--log-level",
+        "debug",
+        "--access-logfile",
+        "-",
+        "--error-logfile",
+        "-",
+        "server:bern2",
+    )
+else:
+    from app import create_app
 
-    app = create_app(args)
-    app.run(host=args.host, port=int(args.port), debug=args.front_dev)
+    bern2 = create_app(args)
