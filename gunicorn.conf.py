@@ -101,6 +101,13 @@ def post_worker_init(worker):
         print("Started", server.dir, "in", dir)
         os.chdir(cwd)
 
+    for type in ["disease", "gene"]:
+        for dir in ["inputs", "outputs"]:
+            path = f"{args.tmpdir}/resources/normalization/{dir}/{type}"
+            subprocess.run(f"rm -rf {path}", shell=True)
+            os.makedirs(path, exist_ok=True)
+            print("Created", path)
+
     import bern2
     from app.result_parser import ResultParser
 
