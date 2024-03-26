@@ -45,6 +45,7 @@ def mtner_recognize(model, dict_path, base_name, args):
     res[0]['num_entities'] = num_entities
     # Write output str to a .PubTator format file
     with open(output_mt_ner, 'w', encoding='utf-8') as f:
+        print("Writing to", output_mt_ner)
         json.dump(res[0], f)
 
 def run_server(model, args):
