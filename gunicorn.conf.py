@@ -97,7 +97,7 @@ def post_worker_init(worker):
         subprocess.run(f"rm -rf {dir}", shell=True)
         subprocess.run(f"mkdir -p {dir}", shell=True)
 
-        subprocess.run(f"ln -s {server.dir}/* {dir}", shell=True)
+        subprocess.run(f"ln -s /opt/bern2/{server.dir}/* {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
             subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
             os.makedirs(f"{dir}/{subdir}")
