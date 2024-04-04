@@ -1,5 +1,5 @@
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from server import BERN2Args
@@ -11,6 +11,7 @@ class Server:
     bin: str
     args: list[str]
     link_dir: str | None = None
+    resources: list[str] = field(default_factory=list)
 
 
 SERVERS = [
@@ -44,6 +45,10 @@ SERVERS = [
     Server(
         dir="resources/normalization",
         link_dir="resources/normalization/normalizers/disease",
+        resources=[
+            "dictionary",
+            "normalizers/disease/resources",
+        ],
         bin="java",
         args=[
             "-Xmx16G",
@@ -116,6 +121,12 @@ def post_worker_init(worker):
         else:
             prefixes.add(prefix)
             subprocess.run(f"ln -s /opt/bern2/{prefix}/* {link_dir}", shell=True)
+
+        for resource in server.resources:
+            os.makedirs(f"{dir}/{resource}", exist_ok=True)
+            subprocess.run(
+                f"ln -s /opt/bern2/{prefix}/{resource}/* {dir}/{resource}", shell=True
+            )
 
         for subdir in ["input", "output", "tmp"]:
             _unlink_dir(f"{dir}/{subdir}")
