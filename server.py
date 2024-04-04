@@ -9,7 +9,7 @@ _count = Value("i", 0)
 def _next_offset():
     with _count.get_lock():
         _count.value += 1
-        return _count.value
+        return _count.value * 10
 
 
 @dataclass
