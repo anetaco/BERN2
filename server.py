@@ -35,17 +35,6 @@ class BERN2Args:
     no_cuda: bool = False
     front_dev: bool = False
 
-    def __post_init__(self):
-        self.mtner_home = os.path.join(self.tmpdir, self.mtner_home)
-        self.gnormplus_home = os.path.join(self.tmpdir, self.gnormplus_home)
-        self.tmvar2_home = os.path.join(self.tmpdir, self.tmvar2_home)
-
-        self.mtner_port += self.port_offset
-        self.gnormplus_port += self.port_offset
-        self.tmvar2_port += self.port_offset
-        self.gene_norm_port += self.port_offset
-        self.disease_norm_port += self.port_offset
-
 
 args = BERN2Args()
 
@@ -57,7 +46,7 @@ if __name__ == "__main__":
         "--timeout",
         "600",
         "-w",
-        "3",
+        "2",
         "-b",
         f"{args.host}:{args.port}",
         "--log-level",
