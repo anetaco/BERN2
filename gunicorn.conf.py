@@ -69,7 +69,10 @@ SERVERS = [
 
 def worker_exit(server, worker):
     flask = worker.app.callable
-    args = flask.config["args"]
+    try:
+        args = flask.config["args"]
+    except KeyError:
+        return
 
     for port in [
         args.gnormplus_port,
