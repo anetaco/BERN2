@@ -71,7 +71,7 @@ def worker_exit(server, worker):
     flask = worker.app.callable
     try:
         args = flask.config["args"]
-    except KeyError:
+    except (KeyError, AttributeError):
         return
 
     for port in [
@@ -89,10 +89,13 @@ def worker_exit(server, worker):
 def post_worker_init(worker):
     import subprocess
 
+    os.chdir("/opt/bern2")
     args = BERN2Args()
 
     for server in SERVERS:
-        os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
+        dir = args.tmpdir + "/" + server.dir
+        subprocess.run(f"rm -rf {dir}", shell=True)
+        os.makedirs(dir, exist_ok=True)
 
         subprocess.run(f"ln -s {server.dir}/* {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
