@@ -45,7 +45,7 @@ SERVERS = [
     Server(
         dir="resources/normalization",
         link_dir="resources/normalization/normalizers/disease",
-        resources=["dictionary"],
+        resources=["dictionary", "normalizers/neural_norm_caches"],
         bin="java",
         args=[
             "-Xmx16G",
@@ -105,7 +105,7 @@ def post_worker_init(worker):
     os.chdir("/opt/bern2")
     args = BERN2Args()
 
-    prefixes = set()
+    prefixes: set[str] = set()
     for server in SERVERS:
         os.makedirs(
             link_dir := args.tmpdir + "/" + (server.link_dir or server.dir),
