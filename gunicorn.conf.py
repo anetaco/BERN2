@@ -110,7 +110,7 @@ def post_worker_init(worker):
         **{
             k: v
             for k, v in asdict(args).items()
-            if k not in ["host", "port", "tmpdir", "front_dev"]
+            if k not in ["host", "port", "tmpdir", "front_dev", "port_offset"]
         }
     )
     flask.config["r_parser"] = ResultParser()
