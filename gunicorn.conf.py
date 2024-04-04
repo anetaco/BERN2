@@ -92,12 +92,18 @@ def post_worker_init(worker):
     os.chdir("/opt/bern2")
     args = BERN2Args()
 
+    prefixes = set()
     for server in SERVERS:
         dir = args.tmpdir + "/" + server.dir
         subprocess.run(f"rm -rf {dir}", shell=True)
         subprocess.run(f"mkdir -p {dir}", shell=True)
 
-        subprocess.run(f"ln -s /opt/bern2/{server.dir}/* {dir}", shell=True)
+        if server.dir in prefixes:
+            print(f"Skipping ln of duplicate prefix: {server.dir}")
+        else:
+            prefixes.add(server.dir)
+            subprocess.run(f"ln -s /opt/bern2/{server.dir}/* {dir}", shell=True)
+
         for subdir in ["input", "output", "tmp"]:
             subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
             os.makedirs(f"{dir}/{subdir}")
