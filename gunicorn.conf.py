@@ -111,11 +111,10 @@ def post_worker_init(worker):
             print(f"Skipping ln of duplicate prefix: {link_dir}")
         else:
             prefixes.add(link_dir)
-            subprocess.run(f"ln -s /opt/bern2/{link_dir}/* {dir}", shell=True)
+            subprocess.run(f"ln -s /opt/bern2/{link_dir}/* {link_dir}", shell=True)
 
         for subdir in ["input", "output", "tmp"]:
             _unlink_dir(f"{dir}/{subdir}")
-        print("Created", dir)
 
     for type in ["disease", "gene"]:
         for dir in ["inputs", "outputs"]:
