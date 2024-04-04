@@ -88,6 +88,14 @@ def worker_exit(server, worker):
     print("Killed", worker.pid, "and removed", args.tmpdir)
 
 
+def _unlink_dir(dir):
+    if os.path.islink(dir):
+        os.unlink(dir)
+    elif os.path.exists(dir):
+        raise ValueError(f"Directory {dir} is not a symlink")
+    os.makedirs(dir)
+
+
 def post_worker_init(worker):
     import subprocess
 
@@ -106,16 +114,13 @@ def post_worker_init(worker):
             subprocess.run(f"ln -s /opt/bern2/{link_dir}/* {dir}", shell=True)
 
         for subdir in ["input", "output", "tmp"]:
-            subprocess.run(f"unlink {dir}/{subdir}", shell=True)
-            os.makedirs(f"{dir}/{subdir}")
+            _unlink_dir(f"{dir}/{subdir}")
         print("Created", dir)
 
     for type in ["disease", "gene"]:
         for dir in ["inputs", "outputs"]:
             path = f"{args.tmpdir}/resources/normalization/{dir}/{type}"
-            subprocess.run(f"unlink {path}", shell=True)
-            os.makedirs(path, exist_ok=True)
-            print("Created", path)
+            _unlink_dir(path)
 
     for server in SERVERS:
         os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
