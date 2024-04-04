@@ -76,7 +76,7 @@ def post_worker_init(worker):
         os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
-        subprocess.run(f"cp -ra {server.dir} {dir}", shell=True)
+        subprocess.run(f"cp -ra {server.dir}/* {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
             subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
             os.makedirs(f"{dir}/{subdir}")
