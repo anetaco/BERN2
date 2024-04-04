@@ -73,17 +73,17 @@ def post_worker_init(worker):
     args = BERN2Args()
 
     cwd = os.getcwd()
-    os.chdir(args.tmpdir)
 
     for server in SERVERS:
-        logdir = "/var/log/bern2/" + server.dir
-        os.makedirs(logdir, exist_ok=True)
-        os.makedirs(server.dir, exist_ok=True)
-        subprocess.run(f"cp -ra {cwd}/{server.dir} {server.dir}", shell=True)
+        os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
+        os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
+
+        subprocess.run(f"cp -ra {server.dir} {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
-            subprocess.run(f"rm -rf {server.dir}/{subdir}", shell=True)
-            os.makedirs(f"{server.dir}/{subdir}")
-            print("Created", f"{server.dir}/{subdir}")
+            subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
+            os.makedirs(f"{dir}/{subdir}")
+        print("Created", dir)
+
         log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
         subprocess.Popen(
             [server.bin, *[arg.format(**asdict(args)) for arg in server.args]],
