@@ -107,13 +107,14 @@ def post_worker_init(worker):
 
     prefixes = set()
     for server in SERVERS:
-        Path(
-            link_dir := args.tmpdir + "/" + (server.link_dir or server.dir)
-        ).parent.mkdir(parents=True, exist_ok=True)
+        os.makedirs(
+            link_dir := args.tmpdir + "/" + (server.link_dir or server.dir),
+            exist_ok=True,
+        )
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
         print(f"mkdir: {dir}")
-        print(f"mkdir: {link_dir}/..")
+        print(f"mkdir: {link_dir}")
 
         prefix = str(Path(link_dir).relative_to(args.tmpdir))
         if any(prefix.startswith(p) for p in prefixes):
