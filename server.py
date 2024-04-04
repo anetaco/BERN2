@@ -5,7 +5,7 @@ from tempfile import mkdtemp
 __count = 0
 
 
-def __next_offset():
+def _next_offset():
     global __count
     __count += 1
     return __count * 10
@@ -14,7 +14,7 @@ def __next_offset():
 @dataclass
 class BERN2Args:
     tmpdir: str = field(default_factory=mkdtemp)
-    port_offset: int = field(default_factory=__next_offset)
+    port_offset: int = field(default_factory=_next_offset)
 
     mtner_home: str = "multi_ner"
     mtner_port: int = 18894
