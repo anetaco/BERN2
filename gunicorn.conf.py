@@ -112,6 +112,9 @@ def post_worker_init(worker):
         ).parent.mkdir(parents=True, exist_ok=True)
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
+        print(f"mkdir: {dir}")
+        print(f"mkdir: {link_dir}/..")
+
         prefix = str(Path(link_dir).relative_to(args.tmpdir))
         if any(prefix.startswith(p) for p in prefixes):
             print(f"Skipping ln of duplicate prefix: {link_dir}")
