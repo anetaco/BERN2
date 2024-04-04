@@ -81,10 +81,10 @@ def post_worker_init(worker):
         os.makedirs(logdir, exist_ok=True)
         os.makedirs(dir, exist_ok=True)
         os.chdir(dir)
-        subprocess.run(f"cp -ra {cwd}/{server.dir} {server.dir}", shell=True)
+        subprocess.run(f"cp -ra {cwd}/{server.dir} {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
-            subprocess.run(f"rm -rf {subdir}", shell=True)
-            os.makedirs(subdir)
+            subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
+            os.makedirs(f"{dir}/{subdir}")
             print("Created", f"{dir}/{subdir}")
         log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
         subprocess.Popen(
