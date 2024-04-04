@@ -113,21 +113,15 @@ def post_worker_init(worker):
         )
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
-        print(f"mkdir: {dir}")
-        print(f"mkdir: {link_dir}")
-
         prefix = str(Path(link_dir).relative_to(args.tmpdir))
         if any(prefix.startswith(p) for p in prefixes):
             print(f"Skipping ln of duplicate prefix: {link_dir}")
         else:
             prefixes.add(prefix)
-            print(f"ln -s /opt/bern2/{prefix}/* {link_dir}")
             subprocess.run(f"ln -s /opt/bern2/{prefix}/* {link_dir}", shell=True)
 
         for resource in server.resources:
-            print(f"mkdir {dir}/{resource}")
             os.makedirs(f"{dir}/{resource}", exist_ok=True)
-            print(f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}")
             subprocess.run(
                 f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}",
                 shell=True,
