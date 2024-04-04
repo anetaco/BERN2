@@ -121,6 +121,7 @@ def post_worker_init(worker):
             subprocess.run(f"ln -s /opt/bern2/{prefix}/* {link_dir}", shell=True)
 
         for resource in server.resources:
+            print(f"mkdir {dir}/{resource}")
             os.makedirs(f"{dir}/{resource}", exist_ok=True)
             print(f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}")
             subprocess.run(
