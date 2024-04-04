@@ -2,10 +2,20 @@ import os
 from dataclasses import dataclass, field
 from tempfile import mkdtemp
 
+__count = 0
+
+
+def __next_offset():
+    global __count
+    __count += 1
+    return __count * 10
+
 
 @dataclass
 class BERN2Args:
     tmpdir: str = field(default_factory=mkdtemp)
+    port_offset: int = field(default_factory=__next_offset)
+
     mtner_home: str = "multi_ner"
     mtner_port: int = 18894
     gnormplus_home: str = "resources/GNormPlusJava"
@@ -30,6 +40,12 @@ class BERN2Args:
         self.gnormplus_home = os.path.join(self.tmpdir, self.gnormplus_home)
         self.tmvar2_home = os.path.join(self.tmpdir, self.tmvar2_home)
 
+        self.mtner_port += self.port_offset
+        self.gnormplus_port += self.port_offset
+        self.tmvar2_port += self.port_offset
+        self.gene_norm_port += self.port_offset
+        self.disease_norm_port += self.port_offset
+
 
 args = BERN2Args()
 
@@ -37,7 +53,7 @@ if __name__ == "__main__":
     os.execlp(
         "gunicorn",
         "gunicorn",
-        "--preload",
+        # "--preload",
         "--timeout",
         "600",
         "-w",
