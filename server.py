@@ -1,14 +1,15 @@
 import os
 from dataclasses import dataclass, field
+from multiprocessing import Value
 from tempfile import mkdtemp
 
-__count = 0
+_count = Value("i", 0)
 
 
 def _next_offset():
-    global __count
-    __count += 1
-    return __count * 10
+    with _count.get_lock():
+        _count.value += 1
+        return _count.value
 
 
 @dataclass
@@ -34,6 +35,17 @@ class BERN2Args:
     keep_files: bool = False
     no_cuda: bool = False
     front_dev: bool = False
+
+    def __post_init__(self):
+        self.mtner_home = os.path.join(self.tmpdir, self.mtner_home)
+        self.gnormplus_home = os.path.join(self.tmpdir, self.gnormplus_home)
+        self.tmvar2_home = os.path.join(self.tmpdir, self.tmvar2_home)
+
+        self.mtner_port += self.port_offset
+        self.gnormplus_port += self.port_offset
+        self.tmvar2_port += self.port_offset
+        self.gene_norm_port += self.port_offset
+        self.disease_norm_port += self.port_offset
 
 
 args = BERN2Args()

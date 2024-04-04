@@ -71,11 +71,6 @@ def post_worker_init(worker):
     import subprocess
 
     args = BERN2Args()
-    args.mtner_port += args.port_offset
-    args.gnormplus_port += args.port_offset
-    args.tmvar2_port += args.port_offset
-    args.gene_norm_port += args.port_offset
-    args.disease_norm_port += args.port_offset
 
     for server in SERVERS:
         os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
