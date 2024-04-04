@@ -91,7 +91,7 @@ def post_worker_init(worker):
             # stdout=log,
             # stderr=subprocess.STDOUT,
         )
-        print("Started", server.dir, "in", dir)
+        print("Started", server.dir, "in", args.tmpdir, "with PID", worker.pid)
         os.chdir(cwd)
 
     for type in ["disease", "gene"]:
