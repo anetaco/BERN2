@@ -85,7 +85,7 @@ def post_worker_init(worker):
         log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
         subprocess.Popen(
             [server.bin, *[arg.format(**asdict(args)) for arg in server.args]],
-            cwd=server.dir,
+            cwd=dir,
             # stdout=log,
             # stderr=subprocess.STDOUT,
         )
@@ -110,6 +110,8 @@ def post_worker_init(worker):
             subprocess.run(f"rm -rf {path}", shell=True)
             os.makedirs(path, exist_ok=True)
             print("Created", path)
+
+    os.chdir(args.tmpdir)
 
     import bern2
     from app.result_parser import ResultParser
