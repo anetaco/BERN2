@@ -89,36 +89,13 @@ def post_worker_init(worker):
     args = BERN2Args()
 
     for server in SERVERS:
-        os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
-        subprocess.run(f"cp -ra {server.dir}/* {dir}", shell=True)
+        subprocess.run(f"ln -s {server.dir}/* {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
             subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
             os.makedirs(f"{dir}/{subdir}")
         print("Created", dir)
-
-        log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
-        subprocess.Popen(
-            [server.bin, *[arg.format(**asdict(args)) for arg in server.args]],
-            cwd=dir,
-            # stdout=log,
-            # stderr=subprocess.STDOUT,
-        )
-        print(
-            "Started",
-            server.dir,
-            "in",
-            args.tmpdir,
-            "with gnormplus_port",
-            args.gnormplus_port,
-            "and tmvar2_port",
-            args.tmvar2_port,
-            "and gene_norm_port",
-            args.gene_norm_port,
-            "and disease_norm_port",
-            args.disease_norm_port,
-        )
 
     for type in ["disease", "gene"]:
         for dir in ["inputs", "outputs"]:
@@ -126,6 +103,28 @@ def post_worker_init(worker):
             subprocess.run(f"rm -rf {path}", shell=True)
             os.makedirs(path, exist_ok=True)
             print("Created", path)
+
+    for server in SERVERS:
+        os.makedirs(logdir := "/var/log/bern2/" + server.dir, exist_ok=True)
+        log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
+        subprocess.Popen(
+            [server.bin, *[arg.format(**asdict(args)) for arg in server.args]],
+            cwd=args.tmpdir + "/" + server.dir,
+            # stdout=log,
+            # stderr=subprocess.STDOUT,
+        )
+    print(
+        "Started",
+        args.tmpdir,
+        "with gnormplus_port",
+        args.gnormplus_port,
+        "and tmvar2_port",
+        args.tmvar2_port,
+        "and gene_norm_port",
+        args.gene_norm_port,
+        "and disease_norm_port",
+        args.disease_norm_port,
+    )
 
     os.chdir(args.tmpdir)
 
