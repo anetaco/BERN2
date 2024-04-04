@@ -95,7 +95,7 @@ def post_worker_init(worker):
     for server in SERVERS:
         dir = args.tmpdir + "/" + server.dir
         subprocess.run(f"rm -rf {dir}", shell=True)
-        os.makedirs(dir, exist_ok=True)
+        subprocess.run(f"mkdir -p {dir}", shell=True)
 
         subprocess.run(f"ln -s {server.dir}/* {dir}", shell=True)
         for subdir in ["input", "output", "tmp"]:
