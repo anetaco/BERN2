@@ -7,9 +7,9 @@ from server import BERN2Args
 @dataclass
 class Server:
     dir: str
-    link_dir: str | None = None
     bin: str
     args: list[str]
+    link_dir: str | None = None
 
 
 SERVERS = [
