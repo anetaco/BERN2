@@ -94,9 +94,7 @@ def post_worker_init(worker):
 
     prefixes = set()
     for server in SERVERS:
-        dir = args.tmpdir + "/" + server.dir
-        subprocess.run(f"rm -rf {dir}", shell=True)
-        subprocess.run(f"mkdir -p {dir}", shell=True)
+        os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
 
         if any(server.dir.startswith(prefix) for prefix in prefixes):
             print(f"Skipping ln of duplicate prefix: {server.dir}")
