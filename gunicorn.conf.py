@@ -67,6 +67,22 @@ SERVERS = [
 ]
 
 
+def worker_exit(server, worker):
+    flask = worker.app.callable
+    args = flask.config["args"]
+
+    for port in [
+        args.gnormplus_port,
+        args.tmvar2_port,
+        args.gene_norm_port,
+        args.disease_norm_port,
+    ]:
+        os.system(f"kill -9 $(lsof -t -i tcp:{port})")
+
+    os.system(f"rm -rf {args.tmpdir}")
+    print("Killed", worker.pid, "and removed", args.tmpdir)
+
+
 def post_worker_init(worker):
     import subprocess
 
@@ -117,6 +133,7 @@ def post_worker_init(worker):
     from app.result_parser import ResultParser
 
     flask = worker.app.callable
+    flask.config["args"] = args
     flask.config["model"] = bern2.BERN2(
         **{
             k: v
