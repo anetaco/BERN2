@@ -1,5 +1,6 @@
 import os
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
 from server import BERN2Args
 
@@ -104,14 +105,19 @@ def post_worker_init(worker):
 
     prefixes = set()
     for server in SERVERS:
+        Path(
+            link_dir := args.tmpdir + "/" + (server.link_dir or server.dir)
+        ).parent.mkdir(parents=True, exist_ok=True)
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
-        link_dir = server.link_dir or server.dir
 
-        if any(link_dir.startswith(prefix) for prefix in prefixes):
+        if any(
+            (prefix := str(Path(link_dir).relative_to(args.tmpdir))).startswith(p)
+            for p in prefixes
+        ):
             print(f"Skipping ln of duplicate prefix: {link_dir}")
         else:
-            prefixes.add(link_dir)
-            subprocess.run(f"ln -s /opt/bern2/{link_dir}/* {link_dir}", shell=True)
+            prefixes.add(prefix)
+            subprocess.run(f"ln -s /opt/bern2/{prefix}/* {link_dir}", shell=True)
 
         for subdir in ["input", "output", "tmp"]:
             _unlink_dir(f"{dir}/{subdir}")
