@@ -45,10 +45,7 @@ SERVERS = [
     Server(
         dir="resources/normalization",
         link_dir="resources/normalization/normalizers/disease",
-        resources=[
-            "dictionary",
-            "normalizers/disease/resources",
-        ],
+        resources=["dictionary"],
         bin="java",
         args=[
             "-Xmx16G",
@@ -125,7 +122,8 @@ def post_worker_init(worker):
         for resource in server.resources:
             os.makedirs(f"{dir}/{resource}", exist_ok=True)
             subprocess.run(
-                f"ln -s /opt/bern2/{prefix}/{resource}/* {dir}/{resource}", shell=True
+                f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}",
+                shell=True,
             )
 
         for subdir in ["input", "output", "tmp"]:
