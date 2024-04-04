@@ -91,8 +91,20 @@ def post_worker_init(worker):
             # stdout=log,
             # stderr=subprocess.STDOUT,
         )
-        print("Started", server.dir, "in", args.tmpdir, "with PID", worker.pid)
-        os.chdir(cwd)
+        print(
+            "Started",
+            server.dir,
+            "in",
+            args.tmpdir,
+            "with gnormplus_port",
+            args.gnormplus_port,
+            "and tmvar2_port",
+            args.tmvar2_port,
+            "and gene_norm_port",
+            args.gene_norm_port,
+            "and disease_norm_port",
+            args.disease_norm_port,
+        )
 
     for type in ["disease", "gene"]:
         for dir in ["inputs", "outputs"]:
