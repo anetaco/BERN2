@@ -7,6 +7,7 @@ from server import BERN2Args
 @dataclass
 class Server:
     dir: str
+    link_dir: str | None = None
     bin: str
     args: list[str]
 
@@ -41,6 +42,7 @@ SERVERS = [
     ),
     Server(
         dir="resources/normalization",
+        link_dir="resources/normalization/normalizers/disease",
         bin="java",
         args=[
             "-Xmx16G",
@@ -95,22 +97,23 @@ def post_worker_init(worker):
     prefixes = set()
     for server in SERVERS:
         os.makedirs(dir := args.tmpdir + "/" + server.dir, exist_ok=True)
+        link_dir = server.link_dir or server.dir
 
-        if any(server.dir.startswith(prefix) for prefix in prefixes):
-            print(f"Skipping ln of duplicate prefix: {server.dir}")
+        if any(link_dir.startswith(prefix) for prefix in prefixes):
+            print(f"Skipping ln of duplicate prefix: {link_dir}")
         else:
-            prefixes.add(server.dir)
-            subprocess.run(f"ln -s /opt/bern2/{server.dir}/* {dir}", shell=True)
+            prefixes.add(link_dir)
+            subprocess.run(f"ln -s /opt/bern2/{link_dir}/* {dir}", shell=True)
 
         for subdir in ["input", "output", "tmp"]:
-            subprocess.run(f"rm -rf {dir}/{subdir}", shell=True)
+            subprocess.run(f"unlink {dir}/{subdir}", shell=True)
             os.makedirs(f"{dir}/{subdir}")
         print("Created", dir)
 
     for type in ["disease", "gene"]:
         for dir in ["inputs", "outputs"]:
             path = f"{args.tmpdir}/resources/normalization/{dir}/{type}"
-            subprocess.run(f"rm -rf {path}", shell=True)
+            subprocess.run(f"unlink {path}", shell=True)
             os.makedirs(path, exist_ok=True)
             print("Created", path)
 
