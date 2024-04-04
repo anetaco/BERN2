@@ -85,7 +85,7 @@ def post_worker_init(worker):
         log = open(f"{logdir}/{os.getpid()}.{id(worker.app.callable)}.log", "w")
         subprocess.Popen(
             [server.bin, *[arg.format(**asdict(args)) for arg in server.args]],
-            cwd=args.tmpdir,
+            cwd=dir,
             # stdout=log,
             # stderr=subprocess.STDOUT,
         )
