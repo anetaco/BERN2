@@ -85,7 +85,7 @@ def worker_exit(server, worker):
         args.gene_norm_port,
         args.disease_norm_port,
     ]:
-        os.system(f"kill -9 $(lsof -t -i tcp:{port})")
+        os.system(f"kill -9 $(lsof -t -i:{port})")
 
     os.system(f"rm -rf {args.tmpdir}")
     print("Killed", worker.pid, "and removed", args.tmpdir)
@@ -117,10 +117,12 @@ def post_worker_init(worker):
             print(f"Skipping ln of duplicate prefix: {link_dir}")
         else:
             prefixes.add(prefix)
+            print(f"ln -s /opt/bern2/{prefix}/* {link_dir}")
             subprocess.run(f"ln -s /opt/bern2/{prefix}/* {link_dir}", shell=True)
 
         for resource in server.resources:
             os.makedirs(f"{dir}/{resource}", exist_ok=True)
+            print(f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}")
             subprocess.run(
                 f"ln -s /opt/bern2/{server.dir}/{resource}/* {dir}/{resource}",
                 shell=True,
