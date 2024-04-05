@@ -58,7 +58,7 @@ if __name__ == "__main__":
         "--timeout",
         "600",
         "-w",
-        "4",
+        "6",
         "-b",
         f"{args.host}:{args.port}",
         "--log-level",
