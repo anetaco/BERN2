@@ -58,7 +58,7 @@ if __name__ == "__main__":
         "--timeout",
         "600",
         "-w",
-        "6",
+        os.environ.get("GUNICORN_WORKERS", "4"),
         "-b",
         f"{args.host}:{args.port}",
         "--log-level",
