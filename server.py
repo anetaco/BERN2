@@ -62,7 +62,7 @@ if __name__ == "__main__":
         "-b",
         f"{args.host}:{args.port}",
         "--log-level",
-        "debug",
+        "info",
         "--access-logfile",
         "-",
         "--error-logfile",
